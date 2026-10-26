@@ -1,0 +1,90 @@
+*claude-diff-explainer.txt*  Explain selected code and its diff with Claude Code
+
+==============================================================================
+CONTENTS                                          *claude-diff-explainer*
+
+  1. Introduction ........................ |claude-diff-explainer-intro|
+  2. Commands ............................ |claude-diff-explainer-commands|
+  3. Configuration ....................... |claude-diff-explainer-config|
+  4. Lua API ............................. |claude-diff-explainer-api|
+
+==============================================================================
+1. INTRODUCTION                                *claude-diff-explainer-intro*
+
+Sends the visually selected lines together with the file's diff to the
+`claude` CLI (`claude -p`) and appends the answer to a markdown dialog, one
+per ticket. The answer has two sections: what the code does, and what changed
+and why. Follow-up questions resume the same Claude session.
+
+Inside a diffview.nvim view the diff is the view's revision range for the
+current file. Elsewhere it is the branch against its base branch (origin/HEAD,
+main or master). Errors never reach the dialog file; they are shown with
+|vim.notify()|.
+
+Requirements: Neovim 0.10, the `claude` CLI logged in, git.
+Run `:checkhealth claude-diff-explainer` to verify.
+
+==============================================================================
+2. COMMANDS                                 *claude-diff-explainer-commands*
+
+:'<,'>ClaudeDiffExplain                                  *:ClaudeDiffExplain*
+    Explain the selected lines and their diff.
+
+:ClaudeDiffAsk [{question}]                                  *:ClaudeDiffAsk*
+    Ask a follow-up question in the ticket's dialog. Without an argument a
+    prompt asks for the question.
+
+No global mappings are defined. Inside the dialog buffer the key configured
+as `followup_keymap` (default `<leader>a`) runs |:ClaudeDiffAsk|.
+
+==============================================================================
+3. CONFIGURATION                              *claude-diff-explainer-config*
+
+Call `require("claude-diff-explainer").setup({...})`. Defaults: >lua
+
+  {
+    language = "English",
+    model = nil,
+    claude = "claude",
+    base_branch = nil,
+    ticket = function(branch, root)
+      return branch:match("%u+%-%d+") or vim.fs.basename(root)
+    end,
+    dialog = function(root, ticket)
+      return string.format("%s/claude-diff-explainer/%s/%s.md",
+        vim.fn.stdpath("state"), vim.fs.basename(root), ticket)
+    end,
+    session_name = function(ticket) return ticket .. ": code explainer" end,
+    headings = { what = "What it does", why = "What changed and why" },
+    labels = {
+      question = "**Question:**",
+      pending = "_Claude is answering…_",
+      prompt = "Ask Claude: ",
+    },
+    followup_keymap = "<leader>a",
+  }
+<
+language        Language of the answers.
+model           Passed as `--model`; nil keeps Claude Code's default.
+claude          The executable.
+base_branch     Fixed base branch; nil detects it.
+ticket          Function from branch name and repository root to the ticket.
+dialog          Function from repository root and ticket to the dialog path.
+session_name    Display name of the Claude session.
+headings        The two section headings; translated into `language`.
+labels          Texts written into the dialog or shown in prompts.
+followup_keymap Buffer-local mapping in the dialog; false disables it.
+
+==============================================================================
+4. LUA API                                       *claude-diff-explainer-api*
+
+explain({first}, {last})                      *claude-diff-explainer.explain()*
+    Explain the line range; defaults to the last visual selection.
+
+ask({question})                                   *claude-diff-explainer.ask()*
+    Follow-up question; prompts when {question} is nil or empty.
+
+base_branch()                             *claude-diff-explainer.base_branch()*
+    The detected or configured base branch, or nil.
+
+vim:tw=78:ts=8:ft=help:norl:
