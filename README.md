@@ -14,7 +14,7 @@ It is a diff explainer, not a chat or editing plugin. It shells out to `claude -
 - **Diff** – inside a [diffview.nvim](https://github.com/sindrets/diffview.nvim) view the diff is the view's own
   revision range for that file. Elsewhere it is the branch against its base branch (`origin/HEAD`, else `main`, else
   `master`), committed and uncommitted changes alike.
-- **Ticket** – the branch name yields a ticket (`EM-1234` by default). One Claude session and one dialog file exist
+- **Ticket** – the branch name yields a ticket (`PROJ-1234` by default). One Claude session and one dialog file exist
   per ticket. On branches without a ticket, the repository name stands in.
 - **Dialog** – a markdown file, shown in a split on the right. Each explanation starts with a heading naming
   `path:first-last` and the time. Follow-ups are appended below. Errors never reach the file: a failed call is
